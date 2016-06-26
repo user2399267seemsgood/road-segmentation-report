@@ -150,9 +150,9 @@ We wanted to have the original image but also a smoothed version with less noise
 
 Out last feature is a bit more complex and is based on the paper "MORPHOLOGICAL ROAD SEGMENTATION IN URBAN AREAS FROM HIGH RESOLUTION SATELLITE IMAGES" by Gaetano, Zerubia, Scarpa and Poggi.
 
-It is based on a morphological analysis of the image. The analysis assumes that roadsa are object that spraed over a rather large part and that have a rather small width compared to their total length.
+It is based on a morphological analysis of the image. The analysis assumes that roadsa are object that spraed over a rather large part and that have a rather small width compared to their total length. This is why a skeletonizeing algorithm is the basis for this feature. Ideally a road can be approximated and then be represented by a branch of the skeleton. 
 
-
+Lets take a look at a brief overview of the algorithm. First edge detection is conducted on the image. The resuls is used to compute an eucledian distance map (EDM) which then is use to exract the skeleton from the original image. Skeletonizing is not a robust algorithm and therefore we have to improve the skeleton. Firstly the lines are thinned to 1 pixel in width. We still have to much noise though. Thus we remove small branches that are very unlikely to be part of a road. Those steps are called skeleton pruning. Finally we use double thresholding to classify skeleton branches as roads or not. We consider the average distance in the distnace map of every pixel in a skeleton branch and also the overall average distance of every pixel. In the end a watershed transform is applied to reconstruct a image full of patches, which are labeled road or not, depending from which skeleton branch they originated.
 
 
 
