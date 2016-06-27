@@ -150,9 +150,29 @@ We wanted to have the original image but also a smoothed version with less noise
 
 Out last feature is a bit more complex and is based on the paper "MORPHOLOGICAL ROAD SEGMENTATION IN URBAN AREAS FROM HIGH RESOLUTION SATELLITE IMAGES" by Gaetano, Zerubia, Scarpa and Poggi.
 
-It is based on a morphological analysis of the image. The analysis assumes that roadsa are object that spraed over a rather large part and that have a rather small width compared to their total length. This is why a skeletonizeing algorithm is the basis for this feature. Ideally a road can be approximated and then be represented by a branch of the skeleton. 
+It is based on a morphological analysis of the image. The analysis assumes that roadsa are object that spraed over a rather large part and that have a rather small width compared to their total length. This is why a skeletonizeing algorithm is the basis for this feature. Ideally a road can be approximated and then be represented by a branch of the skeleton.
 
 Lets take a look at a brief overview of the algorithm. First edge detection is conducted on the image. The resuls is used to compute an eucledian distance map (EDM) which then is use to exract the skeleton from the original image. Skeletonizing is not a robust algorithm and therefore we have to improve the skeleton. Firstly the lines are thinned to 1 pixel in width. We still have to much noise though. Thus we remove small branches that are very unlikely to be part of a road. Those steps are called skeleton pruning. Finally we use double thresholding to classify skeleton branches as roads or not. We consider the average distance in the distnace map of every pixel in a skeleton branch and also the overall average distance of every pixel. In the end a watershed transform is applied to reconstruct a image full of patches, which are labeled road or not, depending from which skeleton branch they originated.
+
+
+So lets look at the single steps a bit more in depth.
+
+1. The first step is edge detection. A python implementation of the canny edge detector is used. Canny edge detection has a relative low computational burdon, which is usefull as it has to be applied to all three color channels. The edge map from the different channels are merged into one combined edge map. This image is now used as basis for the next step.
+
+2. In the second step we prepare for the skeletonization. Out of the edge map we create a distance map. 
+We start out by giving all edge pixels from the canny edge map a distance of 1. Now we consider th 8-neighborhoos of each edge pixel. The 8-neighborhoos are the 8 pixel that form a 1 pixel wide border around our center pixel. The four horizontal and vertical neighbors are given a distance of +1. Meaning that if the center pixel had distnace 1, they get assigned distance 2. For the four diagonal pixels we add \sqrt{2} to the value of the center pixel. By assigning a higher value to the diagonal pixels we generate smoother curves and more exact distnce values for further computations. We continue those steps iteratively until all pixels are assigned a value. From now on we refer to the result of this step as the euclidean distance map (EMD).
+
+3. Now, in the third step, we create the skeleton out of our EDM. For this we use a crest line following approach descriped in paper XXX. With the crest line approach we want to find a relatively simple skeleton. One single straight line is enough to represent a road pretty accurately. As in the urban are most roads are either horizontal or vertical without curves this approach gives us a pretty good result. 
+
+Now we look at all the points from the EDM which have a maximum of two neighbors with higher value ar considered crest line points. With this approach we recursively add the neighboring points with the steepest ascent to our crest line. Finally we apply morphological thinning to reduce our crest lines to 1 pixel in width.
+
+4. The forth step consists of pruning the skeleton. The road skeleton obtained in step 3 has a lot of small branches that are most likely not part of a road and thus generate noise. By pruning the skeleton we can enhance the representation of our roads. In our skeleton map we mark all leave nodes yellow and all intersection nodes green. Afterwards we consider all nodes with connection degree of one or lower. And remove those nodes together with the edge/branch between this node and the one on the other side of the edge. This eliminates a lot of small noisy branches. 
+
+
+5. Now in the final step we do road detection and map reconstruction. For this we use a double thresholding method. Recall that we can describe a road as a branch of the skeleton with a large length compared to its width. The first value we threshold is the average distance of a skeleton segment divided by its length. This measure is called the road skeleton score (RSS). In the papaer the propose to set RSS_th = 0.04. The second threshold D_th is set to 12. This is the average distance function over the skeleton points and calculatd as D_i_avg = sum(p \in S_i) * D(p) / |S_i|. We keep all the pixels that are smaller than both those thresholds. 
+
+Lastly we apply a marker based watershed transform on the distnace function to reconstruct our map. The watershed transformation summarizes large similar patches and we color them with the mean color of the original image in that region. We obtain a segmentation map where each connected component contains exactly one connected skeleton segment. 
+
 
 
 
