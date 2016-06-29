@@ -3,164 +3,79 @@
 %\usepackage{times}
 %\usepackage{balance}
 \usepackage{url}
-\usepackage{graphicx}	% For figure environment
-
+\usepackage{graphicx}
+\usepackage{subfigure}	% For figure environment
 
 \begin{document}
-\title{Writing Scientific Papers and Software}
+\title{Road Segmentation from Satellite Images using\\Support Vector Machine Classification}
 
 \author{
-  Cheng Soon Ong\\
+  Daniel Val\'erio Sampaio, Yves Bieri\\
   Department of Computer Science, ETH Zurich, Switzerland
 }
 
 \maketitle
 
 \begin{abstract}
-  A critical part of scientific discovery is the
-  communication of research findings to peers or the general public.
-  Mastery of the process of scientific communication improves the
-  visibility and impact of research. While this guide is a necessary
-  tool for learning how to write in a manner suitable for publication
-  at a scientific venue, it is by no means sufficient, on its own, to
-  make its reader an accomplished writer. We also describe the rules
-  for submission in the computational intelligence laboratory.
-  This guide should be a
-  starting point for further development of writing skills.
+	
 \end{abstract}
 
 \section{Introduction}
 
-The goal of this paper is to introduce a new road segmentation algorithm for urban areas from satellite images.
-Road detection is important for several applications from autonomous driving to tracking
+The goal of this paper is to introduce a new road segmentation algorithm for urban areas from satellite images. Road detection is important for several applications from autonomous driving to tracking
 of road change and urban planning.
-The idea of road segmentation is not a new one and has been implemente numerous times, although with
-different success. The great difficulty in urban areas is the occurence of trees and cars partially blocking the
-view on roads and thus making detection much harder. Additionally parking lots and railways have a lot of
-identical features to roads which leads to them being missclassified.
 
-Our approach consists of extracting 16 features from out satellite images and using those to build a machine
-learing model using SVM. Our featuers consist of the original image, a smoothed version of said image and a 
-skeletonization approach using an euclidean distance map to reveal the underlaying road structure.
+The idea of road segmentation is not a new one and has been implemented numerous times, although with
+different success. The great difficulty in urban areas is the occurrence of trees and cars partially blocking the view on roads and thus making detection much harder. Additionally parking lots and railways have a lot of identical features to roads which leads to them being misclassified.
 
-The image preprocessing and features extraction is implemented in python with the help of numpy and cv2.
-Afterwards the features are fed to matlab which is used to produce a SVM model. We decided on this 
-approach because matlab is faster and easier to run on the ETH cluster. The predicted results are then
-again fed to our python program for postproessing and to produce our final results.
+Our approach consists of extracting 16 features from out satellite images and using those to build a Support Vector Machine (SVM) classification model. Our features contain the original image, a smoothed version of said image and a region map, based on a skeletonization approach using an euclidean-like distance map, to reveal the underlying road structure.
+
+The image preprocessing and feature extraction is implemented in \emph{python} with the help of mostly \emph{numpy} and \emph{cv2}. Afterwards the features are fed to MATLAB which is used to produce our SVM classifier. We decided on this approach because \emph{MATLAB} is faster and easier to run on the ETH cluster. The predicted results are then fed again to our \emph{python} program for post-processing and to produce our final results.
 
 In section XXX we describe the idea used in our approach in more detail,
-followed by the implementation in sectoin XXX and results in section XXX.
+followed by the implementation in section XXX and results in section XXX.
 Lastly we conclude the paper with a discussion of our work in section XXX and 
 give ideas for future work and improvement.
 
-\section{The Structure of a Paper}
-\label{sec:structure-paper}
+\section{Models and Methods}
+To detect roads from satellite images we decided to use Support Vector Machines (SVM) for classification. We were given 100 training images with corresponding ground truth, which we used to classify 50 test images in a second step.
 
-\begin{description}
-\item[Abstract] \ \\
-  Short description of the whole paper, to help the
-  reader decide whether to read it.
-\item[Introduction] \ \\
-  Describe your problem and state your
-  contributions.
-\item[Models and Methods] \ \\
-  Describe your idea and how it was implemented to solve
-  the problem. Survey the related work, giving credit where credit is
-  due.
-\item[Results] \ \\
-  Show evidence to support your claims made in the
-  introduction.
-\item[Discussion] \ \\
-  Discuss the strengths and weaknesses of your
-  approach, based on the results. Point out the implications of your
-  novel idea on the application concerned.
-\item[Summary] \ \\
-  Summarize your contributions in light of the new
-  results.
-\end{description}
+For the data-driven classifier to be effective, we decided on a set of key features which we extracted from both the training images and the test images. Contrary to our initial implementation, we decided to not consider every single pixel in the image but to form patches instead. We mostly worked with 4x4, 5x5 and 10x10 patches and eventually decided on keeping the 5x5 patching, which offered a good computational speedup without loosing a lot of information of the image features.
 
+The training and test images were taken from urban areas, which apart from roads contain mostly buildings, trees and cars. A road is a long and compared to its length thin object, often in horizontal or vertical direction and colored in a shade of gray. By concentrating on those key characteristics of a road we build a set of features which we will extract to train our model.
 
-\section{Tips for Good Writing}
-\label{sec:tips-writing}
+The first feature we use is the color in the image patch. It is only natural to include this feature, as a road is usually gray. We can decide whether an image patch is gray by looking at its \emph{RGB} values. They not only help us to find roads that look gray, but also let us recognize different objects in other colors. On one of the images for example there is a pool next to a house, which naturally is blue. Of course, blue objects cannot be roads, and are therefore excluded right from the beginning. In contrast, if the values of red, blue and green all are approximately the same, the resulting color is some kind of gray. So adding the color is a first useful feature to build our model. 
 
-The ideas for good writing have come
-from~\cite{editor10,jones08,anderson04}.
+As a second feature we decided to add the standard deviation of the color. We stated earlier, that a pixel is gray, if its three \emph{RGB} values are close. This means that if the standard deviation is small, the red, blue and green values are all close together which is a strong indicator that the pixel is gray. 
 
-\subsection{Getting Help}
-One should try to get a draft read by as many friendly people as
-possible. And remember to treat your test readers with respect. If
-they are unable to understand something in your paper, then it is
-highly likely that your reviewers will not understand it
-either. Therefore, do not be defensive about the criticisms you get,
-but use it as an opportunity to improve the paper. Before your submit
-your friends to the pain of reading your draft, please \emph{use a
-  spell checker}.
+After a few trial runs on the training images we noticed that there are a lot of small imperfections which perturb our results. Cars, trees and shadow lead to a pretty big error rate. We concluded that we have to smoothen the images to get rid of this source of noise.
 
-\subsection{Abstract}
-The abstract should really be written last, along with the title of
-the paper. The four points that should be covered~\cite{jones08}:
-\begin{enumerate}
-\item State the problem.
-\item Say why it is an interesting problem.
-\item Say what your solution achieves.
-\item Say what follows from your solution.
-\end{enumerate}
+To do that, we used a mean-shift filter, also used in a previous work by Banerjee at al.\cite{BaBuMo12}. This filter allows for edge preserving smoothing of our image, which is essential, considering that roads have distinct borders. For a neighborhood around the pixel the new spatial center and mean color value are calculated and at the end assigned to the pixel. As parameters we used a spatial radius and a color distance of $10$, which seemed to produce reasonably good results in our experiment.
 
-\subsection{Figures and Tables}
-
-\begin{figure}[tbp]
-  \centering
-  \includegraphics[width=\columnwidth]{denoised_signal_1d}
-  \caption{Signal compression and denoising using the Fourier basis.}
-  \label{fig:denoise-fourier}
-\end{figure}
-\begin{figure}[htbp]
-  \centering
-  \includegraphics[width=\columnwidth]{local_wdenoised_1d}
-  \caption{Signal compression and denoising using the Daubechies wavelet basis.}
-  \label{fig:denoise-wavelet}
+\begin{figure}[t]
+	\centering
+	\subfigure[original\label{fig:original}]
+	{\includegraphics[width=0.49\linewidth]{pics/original.png}}
+	\subfigure[mean-shift filtered \label{fig:mean-shift-filtered}]
+	{\includegraphics[width=0.49\linewidth]{pics/mean_shifted.png}}
+	\caption{Smoothing the original image}
 \end{figure}
 
-Use examples and illustrations to clarify ideas and results. For
-example, by comparing Figure~\ref{fig:denoise-fourier} and
-Figure~\ref{fig:denoise-wavelet}, we can see the two different
-situations where Fourier and wavelet basis perform well. 
-
-\subsection{Models and Methods}
-To detect roads from satellite images we decided to use support vectore machine (SVM) machine learning.
-We were given 100 training images with corresponding groundtruth, which we used to classify 50 training images.
-
-For the machine learning algorithm to be effecive we decided on a set of key features which we extracted from the training images. We do not cinsider every single pixel in the image but form patches instead. We worked with 5x5 patches, which offer a good computational speedup without loosing a lot of information of the image features.
-
-The training and test images were taken from urban areas, which appart from roads contain mostly buildings, trees and cars. A road is a long and compared to its length thin object, often in horizontal or vertical direction and colored in a shade of grey. By concentrating on those key characteristics of a road we build a set of features which we will extract to train our model.
-
-The first feature we use is the color. Its only natural to include this, as a road is usually grey. We can decide whether an image patch is grey by looking at its RGB values. They not only help us to find roads that look grey, but also let us recognize different object in other colors. On one of the images for example there is a pool next to a house, which naturally is blue. Naturally a blue object cannot be a road. If the values of red, blue and green all are approximately the same then the resulting color is a grey. So adding the color is a first useful feature to build our model. 
-
-As a second feature we decided to add the standard deviation of the color. We stated earlier, that a pixel is grey, when its three RGB values are close to each others. This means that if the standard deviation is small, the red, blue and green values are all close toghether which is a strong indicator that the pixel is grey. 
-
-After a few trial runs on the training images we noticed that there are a lot of small imperfactions which perturbe our results. Cars, trees and shadow lead to a pretty big error rate. We concluded that we have to smoothen the images to get rid of this source of noise.
-We used a mean shift filter. This filter allows for edge preserving smoothing of our image. For a neighboorhod around the pixel the new spatial center and mean color value ar calculated and at the end assigned to the pixel. As parameters we used a spatial radius and a color distance of 10. Those parameters seemed to produce reasonably good results in our experiment.
-
-We added the RGB colors and the standard deviaton of those mean shifted images as our third and fourth parameters to our feature vector. 
+In addition to the previous mean and standard deviation \emph{RGB} values of the original image, we added the ones obtained by the mean-shift filtered images as our third and fourth parameters of our feature vector. 
 
 We wanted to have the original image but also a smoothed version with less noise. We are convinced that the combination of those two pictures are a good basis for road detection.
 
+Out last, and most complex feature is based on the paper by Gaetano et al. \cite{GaZeScPo11}. The morphological analysis the paper is based on assumes that roads are objects that spread over a rather large part of the image and that have a comparatively small width compared to their total length. Building a morphological skeleton is then the base of the algorithm and consequently for this feature. Ideally a road can afterwards be approximately represented by a branch of the skeleton.
 
-
-
-Out last feature is a bit more complex and is based on the paper "MORPHOLOGICAL ROAD SEGMENTATION IN URBAN AREAS FROM HIGH RESOLUTION SATELLITE IMAGES" by Gaetano, Zerubia, Scarpa and Poggi.
-
-It is based on a morphological analysis of the image. The analysis assumes that roadsa are object that spraed over a rather large part and that have a rather small width compared to their total length. This is why a skeletonizeing algorithm is the basis for this feature. Ideally a road can be approximated and then be represented by a branch of the skeleton.
-
-Lets take a look at a brief overview of the algorithm. First edge detection is conducted on the image. The resuls is used to compute an eucledian distance map (EDM) which then is use to exract the skeleton from the original image. Skeletonizing is not a robust algorithm and therefore we have to improve the skeleton. Firstly the lines are thinned to 1 pixel in width. We still have to much noise though. Thus we remove small branches that are very unlikely to be part of a road. Those steps are called skeleton pruning. Finally we use double thresholding to classify skeleton branches as roads or not. We consider the average distance in the distnace map of every pixel in a skeleton branch and also the overall average distance of every pixel. In the end a watershed transform is applied to reconstruct a image full of patches, which are labeled road or not, depending from which skeleton branch they originated.
+Lets take a look at a brief overview of the algorithm. First edge detection is conducted on the image. The result is then used to compute an euclidean-like distance map (EDM) which then is used to extract the morphological skeleton. Skeletonization although is not very robust, making it therefore desirable to improve it in a post-processing step. To do that, firstly the lines are thinned to a one-pixel width. As we still have too much noise, we also need to remove small branches that are very unlikely to be part of a road. This step is called skeleton pruning. Finally double thresholding is applied to classify valid branches in the skeleton. We consider the average distance in the distance map of every pixel in a skeleton branch and also the overall average distance of every pixel. In the end a watershed transform is applied to reconstruct an image containing various regions, indicating if there is a possible road or not.
 
 
 So lets look at the single steps a bit more in depth.
 
-1. The first step is edge detection. A python implementation of the canny edge detector is used. Canny edge detection has a relative low computational burdon, which is usefull as it has to be applied to all three color channels. The edge map from the different channels are merged into one combined edge map. This image is now used as basis for the next step.
+1. The first step is edge detection. A python implementation of the canny edge detector is used. Canny edge detection has a relative low computational burden, which is useful as it has to be applied to all three color channels. The edge map from the different channels are merged into one combined edge map. This image is now used as basis for the next step.
 
 2. In the second step we prepare for the skeletonization. Out of the edge map we create a distance map. 
-We start out by giving all edge pixels from the canny edge map a distance of 1. Now we consider th 8-neighborhoos of each edge pixel. The 8-neighborhoos are the 8 pixel that form a 1 pixel wide border around our center pixel. The four horizontal and vertical neighbors are given a distance of +1. Meaning that if the center pixel had distnace 1, they get assigned distance 2. For the four diagonal pixels we add \sqrt{2} to the value of the center pixel. By assigning a higher value to the diagonal pixels we generate smoother curves and more exact distnce values for further computations. We continue those steps iteratively until all pixels are assigned a value. From now on we refer to the result of this step as the euclidean distance map (EMD).
+We start out by giving all edge pixels from the canny edge map a distance of 1. Now we consider th 8-neighborhood of each edge pixel. The 8-neighborhood are the 8 pixel that form a 1 pixel wide border around our center pixel. The four horizontal and vertical neighbors are given a distance of +1. Meaning that if the center pixel had distance 1, they get assigned distance 2. For the four diagonal pixels we add $\sqrt{2}$ to the value of the center pixel. By assigning a higher value to the diagonal pixels we generate smoother curves and more exact distance values for further computations. We continue those steps iteratively until all pixels are assigned a value. From now on we refer to the result of this step as the euclidean distance map (EDM).
 
 3. Now, in the third step, we create the skeleton out of our EDM. For this we use a crest line following approach descriped in paper XXX. With the crest line approach we want to find a relatively simple skeleton. One single straight line is enough to represent a road pretty accurately. As in the urban are most roads are either horizontal or vertical without curves this approach gives us a pretty good result. 
 
@@ -169,41 +84,12 @@ Now we look at all the points from the EDM which have a maximum of two neighbors
 4. The forth step consists of pruning the skeleton. The road skeleton obtained in step 3 has a lot of small branches that are most likely not part of a road and thus generate noise. By pruning the skeleton we can enhance the representation of our roads. In our skeleton map we mark all leave nodes yellow and all intersection nodes green. Afterwards we consider all nodes with connection degree of one or lower. And remove those nodes together with the edge/branch between this node and the one on the other side of the edge. This eliminates a lot of small noisy branches. 
 
 
-5. Now in the final step we do road detection and map reconstruction. For this we use a double thresholding method. Recall that we can describe a road as a branch of the skeleton with a large length compared to its width. The first value we threshold is the average distance of a skeleton segment divided by its length. This measure is called the road skeleton score (RSS). In the papaer the propose to set RSS_th = 0.04. The second threshold D_th is set to 12. This is the average distance function over the skeleton points and calculatd as D_i_avg = sum(p \in S_i) * D(p) / |S_i|. We keep all the pixels that are smaller than both those thresholds. 
+5. Now in the final step we do road detection and map reconstruction. For this we use a double thresholding method. Recall that we can describe a road as a branch of the skeleton with a large length compared to its width. The first value we threshold is the average distance of a skeleton segment divided by its length. This measure is called the road skeleton score (RSS). In the paper the propose to set $RSS_th = 0.04$. The second threshold $D_th$ is set to $12$. This is the average distance function over the skeleton points and calculated as ${D_i}_avg = sum(p \in S_i) * D(p) / |S_i|$. We keep all the pixels that are smaller than both those thresholds. 
 
-Lastly we apply a marker based watershed transform on the distnace function to reconstruct our map. The watershed transformation summarizes large similar patches and we color them with the mean color of the original image in that region. We obtain a segmentation map where each connected component contains exactly one connected skeleton segment. 
-
-
+Lastly we apply a marker based watershed transform on the distance function to reconstruct our map. The watershed transformation summarizes large similar patches and we color them with the mean color of the original image in that region. We obtain a segmentation map where each connected component contains exactly one connected skeleton segment. 
 
 
 
-The models and methods
-section should describe what was
-done to answer the research question, describe how it was done,
-justify the experimental design, and
-explain how the results were analyzed.
-
-The model refers to the underlying mathematical model or structure which 
-you use to describe your problem, or that your solution is based on. 
-The methods on the other hand, are the algorithms used to solve the problem. 
-In some cases, the suggested method directly solves the problem, without having it 
-stated in terms of an underlying model. Generally though it is a better practice to have 
-the model figured out and stated clearly, rather than presenting a method without specifying 
-the model. In this case, the method can be more easily evaluated in the task of fitting 
-the given data to the underlying model.
-
-The methods part of this section, is not a step-by-step, directive,
-protocol as you might see in your lab manual, but detailed enough such
-that an interested reader can reproduce your
-work~\cite{anderson04,wavelab}.
-
-The methods section of a research paper provides the information by
-which a study's validity is judged.
-Therefore, it requires a clear and precise description of how an
-experiment was done, and the rationale
-for why specific experimental procedures were chosen.
-It is usually helpful to
-structure the methods section by~\cite{kallet04methods}:
 \begin{enumerate}
 \item Layout the model you used to describe the problem or the solution.
 \item Describing the algorithms used in the study, briefly including
