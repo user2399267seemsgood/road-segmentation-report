@@ -21,7 +21,7 @@
 \maketitle
 
 \begin{abstract}
-There is no abstract.
+Google Maps is just one of the applications for which road detection plays an important role in nowadays life. Looking into the future, autonomous driving as well alternative route tracking is a key feature that still has further potential. In this paper we introduce a new road segmentation method based on Support Vector Machine classification with 19 features. Our results show an important improvement compared to earlier SVM classifiers and achieve up to 83\% correctness.
 \end{abstract}
 
 \section{Introduction}
@@ -66,7 +66,7 @@ As a second feature we decided to add the standard deviation of the color. We st
 
 After a few trial runs on the training images we noticed that there are a lot of small imperfections which perturb our results. Cars, trees and shadow lead to a pretty big error rate. We concluded that we have to smoothen the images to get rid of this source of noise.
 
-To do that, we used a mean-shift filter, also used in a previous work by Banerjee at al.\cite{BaBuMo12}. This filter allows for edge preserving smoothing of our image, which is essential, considering that roads have distinct borders. For a neighborhood around the pixel the new spatial center and mean color value are calculated and at the end assigned to the pixel. As parameters we used a spatial radius and a color distance of $10$, which seemed to produce reasonably good results in our experiment.
+To do that, we used a mean-shift filter, also used in a previous work by Banerjee, Buddhiraju and Mohan \cite{BaBuMo12}. This filter allows for edge preserving smoothing of our image, which is essential, considering that roads have distinct borders. For a neighborhood around the pixel the new spatial center and mean color value are calculated and at the end assigned to the pixel. As parameters we used a spatial radius and a color distance of $10$, which seemed to produce reasonably good results in our experiment.
 
 In addition to the previous mean and standard deviation \emph{RGB} values of the original image, we added the ones obtained by the mean-shift filtered image as our third and fourth parameters of our feature vector. 
 
@@ -146,20 +146,21 @@ In a last and final step we extracted the first, second and third rank of the Si
 
 \section{Models and Methods - Post-Processing}
 
-Based on an earlier lecture on \emph{Visual Computing} at \emph{ETH Zurich} by Prof. Markus Gross we knew that binary morphological closing could come of help, if we had problems with getting straight lines in the classification. Therefore we decided on doing a post-processing step after the image was classified.
+Based on an earlier lecture on \emph{Visual Computing} we knew that binary morphological closing could come of help, if we had problems with getting filled rectangles (i.e. roads) in the classification. Therefore we decided on doing a post-processing step after the image was classified.
 
 We could see significant improvements with respect to completion, but had difficulties in problematic areas, as the binary morphing amplified erratic regions as well.
 
 \section{Results}
 \label{sec:results}
 
-Our final result, an SVM model trained with 95 out of the 100 training images given (five contained nearly no roads and would have compromised the general case), achieves a correctness of up to 81.48\%, according to the lecture's online evaluation on \emph{kaggle}.
+Our final result, an SVM model trained with 95 out of the 100 training images (five contained nearly no roads and would have compromised the general case), achieves a correctness of up to 81.48\%, according to the lecture's online evaluation on \emph{kaggle}.
 
 \section{Conclusion - Comparison to Related Work}
 \label{sec:comparison}
-To know where we lie in comparison to related work, we looked at a few papers. One of them is a comparative study by Anastasiia Volkova and Peter W. Gibbens \cite{VoGi15}, where different road extraction techniques were analyzed --- one of them being an SVM classification model too, as in our approach. The proposed SVM classifier in \cite{VoGi15} gave high completeness results (75-91\%) --- a value we can relate to with our classifier --- but achieved very low correctness values (35\%) --- in comparison: our classifier achieves more than 81\%. This proves that our feature extraction is richer in information, i.e. there is more relevant detail in our data.
 
-There are other related works that are helped by human interaction, as e.g. a work done by Yuan and Cheriyada \cite{YuCh13}. There, we already have a vector map --- we can also say a one-pixel road map --- from which roads are then built upon. Our approach relies on no user interaction and is therefore fully automatized.
+To compare our method to related work, we picked out two papers. The first is a comparative study by Volkova and Gibbens \cite{VoGi15}, where different road extraction techniques were analyzed --- one of them being an SVM classification model, as in our approach. The proposed classifier gave high completeness results (75-91\%) --- a value we can relate to --- but achieved very low correctness values (35\%). In comparison: our classifier achieves more than 81\%. This proves that our feature extraction is richer in information, i.e. there is more relevant detail in our data.
+
+There are other related works that rely on help of human interaction. For instance, a work done by Yuan and Cheriyada \cite{YuCh13}, where they start from a vector map --- we can also say a one-pixel road map --- from which roads are then built upon. Our approach relies on no user interaction and is therefore fully automatized.
 
 \section{Future Work}
 \label{sec:future_work}
@@ -185,8 +186,14 @@ In the post-processing step, a second skeletonization attempt could be done, to 
 	\label{fig:final_result}
 \end{figure}
 
+\section*{Further Comments}
+
+We initially had a version entirely in \emph{MATLAB}, which achieved an accuracy of 83.58\%. The reason why we started with this implementation: We believe \emph{MATLAB} is more apt for this type of work. Nevertheless, our goal was a running \emph{python} version, reason why we decided to implement the key features there and only use \emph{MATLAB} for training purpose of our SVM classifier.
+
+In addition, we also tried different classifiers: binary classification trees, pattern- and feed-forward neural-networks. We concluded although, that it was better to keep using an SVM classifier, as the results proved to be clearly better.
+
 \section*{Acknowledgments}
-The authors thank the producers of Game of Thrones for being such an inspiration in the early mornings about how to kill people in hard times, when things do not go as expected.
+The authors thank the producers of Game of Thrones for being such an inspiration in the early Monday mornings.
 
 \bibliographystyle{IEEEtran}
 \bibliography{howto-paper}
