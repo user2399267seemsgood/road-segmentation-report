@@ -5,9 +5,10 @@
 \usepackage{url}
 \usepackage{graphicx}
 \usepackage{subfigure}	% For figure environment
+\usepackage{hyperref}
 
-\newcommand{\figref}[1]{Figure \ref{#1}}
-\newcommand{\image}
+\newcommand{\figref}[1]{\hyperref[#1]{Figure \ref*{#1}}}
+\newcommand{\secref}[1]{\hyperref[#1]{Section \ref*{#1}}}
 
 \begin{document}
 \title{Road Segmentation from Satellite Images using\\Support Vector Machine Classification}
@@ -33,7 +34,7 @@ different success. The great difficulty in urban areas is the occurrence of tree
 
 Our approach consists of extracting 16 features from out satellite images and using those to build a Support Vector Machine (SVM) classification model. Our features contain the original image, a smoothed version of said image and a region map, based on a skeletonization approach using an euclidean-like distance map, to reveal the underlying road structure.
 
-The image preprocessing and feature extraction is implemented in \emph{python} with the help of mostly \emph{numpy} and \emph{cv2}. Afterwards the features are fed to MATLAB which is used to produce our SVM classifier. We decided on this approach because \emph{MATLAB} is faster and easier to run on the ETH cluster. The predicted results are then fed again to our \emph{python} program for post-processing and to produce our final results.
+The image preprocessing and feature extraction is implemented in \emph{python} with the help of mostly \emph{numpy} and \emph{cv2}. Afterwards the features are fed to \emph{MATLAB} which is used to produce our SVM classifier. We decided on this approach because \emph{MATLAB} is faster and easier to run on the ETH cluster. The predicted results are then fed again to our \emph{python} program for post-processing and to produce our final results.
 
 In section XXX we describe the idea used in our approach in more detail,
 followed by the implementation in section XXX and results in section XXX.
@@ -72,8 +73,13 @@ In addition to the previous mean and standard deviation \emph{RGB} values of the
 
 Besides the original image we also wanted a smoothed version with less noise, as we are convinced that the combination of those two pictures are a good basis for road detection.
 
+\subsection{Continuity Score}
+
+One of our key problems in road detection was the lack of completeness with respect to the classification of roads in the image. As a result of that we introduced a score, which should indicate if a patch in the image is probable to be part of a road, by considering how many cross-neighboring patches are gray. First we check if the patch to be classified is gray, by thresholding the standard deviation of the before calculated standard deviation of the three color channels. If so, we do the same for its four cross-neighbors and, in the final step, calculate a score based on how many of these patches are considered gray: $0$ if $\leq2$, $0.5$ if $2$ and $1$ if $\geq3$.
+Given the simplicity of this score, it was not clear how much we could gain out of it. Nevertheless, we expected some positive effect on the classification. Even though it was not a major improvement, there were some holes filled and therefore our initial thoughts proved to be right.
+
 \subsection{Region Map}
-Our last, and most complex feature is based on the paper by Gaetano et al. \cite{GaZeScPo11}. The morphological analysis the paper is based on assumes that roads are objects that spread over a rather large part of the image and that have a comparatively small width compared to their total length. Building a morphological skeleton is then the base of the algorithm and consequently for this feature. Ideally a road can afterwards be approximately represented by a branch of the skeleton.
+Our second to last, and most complex feature is based on the paper by Gaetano et al. \cite{GaZeScPo11}. The morphological analysis the paper is based on assumes that roads are objects that spread over a rather large part of the image and that have a comparatively small width compared to their total length. Building a morphological skeleton is then the base of the algorithm and consequently for this feature. Ideally a road can afterwards be approximately represented by a branch of the skeleton.
 
 Lets take a look at a brief overview of the algorithm:
 \begin{enumerate}
@@ -87,8 +93,6 @@ Lets take a look at a brief overview of the algorithm:
 First edge detection is conducted on the image. The result is then used to compute an euclidean-like distance map (EDM) which then is used to extract the morphological skeleton. Skeletonization although is not very robust, making it therefore desirable to improve it in a post-processing step. To do that, firstly the lines are thinned to a one-pixel width. As we still have too much noise, we also need to remove small branches that are very unlikely to be part of a road. This step is called skeleton pruning. Finally double thresholding is applied to classify valid branches in the skeleton. We consider the average distance in the distance map of every pixel in a skeleton branch and also the overall average distance of every pixel. In the end a watershed transform is applied to reconstruct an image containing various regions, indicating if there is a possible road or not.
 
 \subsubsection{Implementation Details} \hspace*{\fill}
-
-The first step is edge detection. Here, we used a \emph{python} implementation of the canny edge detector, where we first transformed the original into a gray-scale image. Although canny edge detection has a higher computational burden than e.g. a sobel edge detector, we decided to use canny, as the results were more accurate.
 
 \begin{figure*}[tp]
 	\centering
@@ -113,6 +117,8 @@ The first step is edge detection. Here, we used a \emph{python} implementation o
 	\caption{Pruning the Skeleton Map}
 \end{figure*}
 
+The first step is edge detection. Here, we used a \emph{python} implementation of the canny edge detector, where we first transformed the original into a gray-scale image. Although canny edge detection has a higher computational burden than e.g. a sobel edge detector, we decided to use canny, as the results were more accurate.
+
 In the second step we prepare for the morphological skeletonization. With help of the previously generated edge map we create an euclidean-like distance map. We start out by giving all edge pixels from the canny edge map a distance of 1. For the future development of the distance map we consider the 8-neighborhood of each edge pixel (8-neighborhood meaning the 8 pixel that form a one-pixel wide border around the center pixel). The four horizontal and vertical neighbors are given a distance of +1, meaning that if the center pixel had distance 1, they get assigned distance 2. For the four diagonal pixels we add $\sqrt{2}$ to the center pixel's value. By assigning a higher value to the diagonal pixels we generate smoother curves and preciser distance values for further computations. We continue those steps iteratively until all pixels are assigned a value. From now on we refer to the result of this step as the euclidean-like distance map (EDM).
 
 Now, in the third step, we create the morphological skeleton out of our EDM. For this we use a crest line following approach, as described in paper \cite{GaZeScPo11}. With the crest line approach we want to find a relatively simple skeleton. One single straight line is enough to represent a road pretty accurately. As in urban areas most roads are either horizontal or vertical without curves this approach gives us a pretty good result. 
@@ -135,9 +141,18 @@ The paper on which the method is based on \cite{GaZeScPo11} proposes to set the 
 
 Lastly we apply a marker based watershed transform on the distance map with the proposed skeleton to reconstruct a region map. The watershed transformation summarizes large common patches that we color with the help of our constructed mean-shift filtered image in every single region. Finally we obtain a segmented region map where each connected component contains exactly one connected skeleton segment. 
 
-\subsection{Results}
+\subsection{Singular Value Decomposition}
 
-Such work, much wow! :-)
+In a last and final step we extracted the first, second and third rank Singular Value Decomposition (SVD) image. As SVD in general extracts useful information, particularly the first two eigenvalues and eigenvectors in our case, we decided to use them and complete our feature extraction.
+
+\section{Results}
+
+Our final result, an SVM model trained with 95 out of the 100 training images given (five contained nearly no roads and would have compromised the general case), achieves a correctness of up to 81.48\%, according to the lecture's online evaluation on \emph{kaggle}.
+
+To know where we lie in comparison to related work, we looked at a few papers. One of them is a comparative study by Anastasiia Volkova and Peter W. Gibbens \cite{VoGi15}, where different road extraction techniques were analyzed --- one of them being an SVM classification model too, as in our approach. The proposed SVM classifier in \cite{VoGi15} gave high completeness results (75-91\%) --- a value we can relate to with our classifier --- but achieved very low correctness values (35\%) --- in comparison: our classifier achieves more than 81\%. This proves that our feature extraction is richer in information, i.e. there is more relevant detail in our data.
+
+A work done by Yuan and Cheriyada \cite{YuCh13} shows the potential of user
+
 
 \section*{Acknowledgements}
 The authors thank the producers of Game of Thrones for being such an inspiration in the early mornings about how to kill people in hard times, when things do not go as expected.
