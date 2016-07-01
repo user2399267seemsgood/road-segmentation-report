@@ -4,7 +4,7 @@
 %\usepackage{balance}
 \usepackage{url}
 \usepackage{graphicx}
-\usepackage{subfigure}	% For figure environment
+\usepackage{subfig}	% For figure environment
 \usepackage{hyperref}
 
 \newcommand{\figref}[1]{\hyperref[#1]{Figure \ref*{#1}}}
@@ -21,7 +21,7 @@
 \maketitle
 
 \begin{abstract}
-	
+There is no abstract.
 \end{abstract}
 
 \section{Introduction}
@@ -32,16 +32,15 @@ of road change and urban planning.
 The idea of road segmentation is not a new one and has been implemented numerous times, although with
 different success. The great difficulty in urban areas is the occurrence of trees and cars partially blocking the view on roads and thus making detection much harder. Additionally parking lots and railways have a lot of identical features to roads which leads to them being misclassified.
 
-Our approach consists of extracting 16 features from out satellite images and using those to build a Support Vector Machine (SVM) classification model. Our features contain the original image, a smoothed version of said image and a region map, based on a skeletonization approach using an euclidean-like distance map, to reveal the underlying road structure.
+Our approach consists of extracting 19 features from out satellite images and using those to build a Support Vector Machine (SVM) classification model. Our features contain the original image, a smoothed version of said image, parts of the Singular Value Decomposition (SVD) and a region map, based on a skeletonization approach using an euclidean-like distance map, to reveal the underlying road structure.
 
 The image preprocessing and feature extraction is implemented in \emph{python} with the help of mostly \emph{numpy} and \emph{cv2}. Afterwards the features are fed to \emph{MATLAB} which is used to produce our SVM classifier. We decided on this approach because \emph{MATLAB} is faster and easier to run on the ETH cluster. The predicted results are then fed again to our \emph{python} program for post-processing and to produce our final results.
 
-In section XXX we describe the idea used in our approach in more detail,
-followed by the implementation in section XXX and results in section XXX.
-Lastly we conclude the paper with a discussion of our work in section XXX and 
-give ideas for future work and improvement.
+\subsection*{Report's Structure}
+In the \hyperref[sec:feature_extraction]{next section} we describe the feature extraction used in our approach, as well as our detailed implementation. The final results achieved are shown in \secref{sec:results}. We conclude the paper with a comparison to related work in \secref{sec:comparison} and give ideas for future improvement in \secref{sec:future_work}.
 
 \section{Models and Methods - Feature Extraction}
+\label{sec:feature_extraction}
 To detect roads from satellite images we decided to use Support Vector Machines (SVM) for classification. We were given 100 training images with corresponding ground truth, which we used to classify 50 test images in a second step.
 
 For the data-driven classifier to be effective, we decided on a set of key features which we extracted from both the training images and the test images. Contrary to our initial implementation, we decided to not consider every single pixel in the image but to form patches instead. We mostly worked with 4x4, 5x5 and 10x10 patches and eventually decided on keeping the 5x5 patching, which offered a good computational speedup without loosing a lot of information of the image features.
@@ -57,11 +56,11 @@ As a second feature we decided to add the standard deviation of the color. We st
 
 \begin{figure*}[t]
 	\centering
-	\subfigure[original\label{fig:original}]
-	{\includegraphics[width=0.38\linewidth]{pics/original.png}}
-	\hspace{0.05\linewidth}
-	\subfigure[mean-shift filtered \label{fig:mean-shift-filtered}]
-	{\includegraphics[width=0.38\linewidth]{pics/mean_shifted.png}}
+	\subfloat[original\label{fig:original}]
+	{\includegraphics[width=0.32\linewidth]{pics/original.png}}
+	\hspace{0.025\linewidth}
+	\subfloat[mean-shift filtered \label{fig:mean-shift-filtered}]
+	{\includegraphics[width=0.32\linewidth]{pics/mean_shifted.png}}
 	\caption{Smoothing the original image}
 \end{figure*}
 
@@ -74,7 +73,7 @@ In addition to the previous mean and standard deviation \emph{RGB} values of the
 Besides the original image we also wanted a smoothed version with less noise, as we are convinced that the combination of those two pictures are a good basis for road detection.
 
 \subsection{Continuity Score}
-
+\label{sec:continuity_score}
 One of our key problems in road detection was the lack of completeness with respect to the classification of roads in the image. As a result of that we introduced a score, which should indicate if a patch in the image is probable to be part of a road, by considering how many cross-neighboring patches are gray. First we check if the patch to be classified is gray, by thresholding the standard deviation of the before calculated standard deviation of the three color channels. If so, we do the same for its four cross-neighbors and, in the final step, calculate a score based on how many of these patches are considered gray: $0$ if $\leq2$, $0.5$ if $2$ and $1$ if $\geq3$.
 Given the simplicity of this score, it was not clear how much we could gain out of it. Nevertheless, we expected some positive effect on the classification. Even though it was not a major improvement, there were some holes filled and therefore our initial thoughts proved to be right.
 
@@ -96,25 +95,30 @@ First edge detection is conducted on the image. The result is then used to compu
 
 \begin{figure*}[tp]
 	\centering
-	\subfigure[canny edge detection\label{fig:edge_detection}]
-	{\includegraphics[width=0.30\linewidth]{pics/edge_detection.png}}
+	\subfloat[canny edge detection\label{fig:edge_detection}]
+	{\includegraphics[width=0.23\linewidth]{pics/edge_detection.png}}
 	\hspace{0.025\linewidth}
-	\subfigure[distance map\label{fig:distance_map}]
-	{\includegraphics[width=0.30\linewidth]{pics/distance_map.png}}
-	\caption{Building the Distance Map}
-\end{figure*}
-
-\begin{figure*}[tp]
-	\centering
-	\subfigure[thinned skeleton\label{fig:skeleton}]
-	{\includegraphics[width=0.28\linewidth]{pics/skeleton.png}}
+	\addtocounter{subfigure}{+1}
+	\subfloat[thinned skeleton\label{fig:skeleton}]
+	{\includegraphics[width=0.23\linewidth]{pics/skeleton.png}}
 	\hspace{0.025\linewidth}
-	\subfigure[pruned skeleton\label{fig:skeleton_pruned}]
-	{\includegraphics[width=0.28\linewidth]{pics/skeleton_pruned.png}}
+	\addtocounter{subfigure}{+1}
+	\subfloat[final skeleton\label{fig:skeleton_final}]
+	{\includegraphics[width=0.23\linewidth]{pics/skeleton_final}}
 	\hspace{0.025\linewidth}
-	\subfigure[final skeleton\label{fig:skeleton_final}]
-	{\includegraphics[width=0.28\linewidth]{pics/skeleton_final}}
-	\caption{Pruning the Skeleton Map}
+	\addtocounter{subfigure}{-4}
+	\subfloat[distance map\label{fig:distance_map}]
+	{\includegraphics[width=0.23\linewidth]{pics/distance_map.png}}
+	\hspace{0.025\linewidth}
+	\addtocounter{subfigure}{+1}
+	\subfloat[pruned skeleton\label{fig:skeleton_pruned}]
+	{\includegraphics[width=0.23\linewidth]{pics/skeleton_pruned.png}}
+	\hspace{0.025\linewidth}
+	\addtocounter{subfigure}{+1}
+	\subfloat[region map]
+	{\includegraphics[width=0.23\linewidth]{pics/color_map}}
+	\caption{Building the Region Map}
+	\label{fig:skeleton_map}
 \end{figure*}
 
 The first step is edge detection. Here, we used a \emph{python} implementation of the canny edge detector, where we first transformed the original into a gray-scale image. Although canny edge detection has a higher computational burden than e.g. a sobel edge detector, we decided to use canny, as the results were more accurate.
@@ -125,7 +129,7 @@ Now, in the third step, we create the morphological skeleton out of our EDM. For
 
 Now we look at all points in the EDM which have a maximum of two neighbors with higher value. These points are considered crest line points. With this approach we recursively add the neighboring points with the steepest ascent to our crest line. Finally we apply morphological thinning to reduce our skeleton to a one-pixel width.
 
-The fourth step consists of pruning the skeleton, as the road skeleton obtained in step 3 has a lot of small branches that most likely are not part of a road. They therefore generate more noise than benefit to the scene, creating a more splintered final image. By pruning the skeleton we can enhance the representation of our roads by getting rid of some of this splintering. As you can see in our skeleton map in \figref{fig:skeleton} we mark all leave nodes and their connections yellow and all intersection nodes as well as their connections to other intersection nodes in green. Finally we consider all nodes with connection degree of one or lower, i.e. all nodes and connections in yellow, and remove those nodes together with the edge/branch.
+The fourth step consists of pruning the skeleton, as the road skeleton obtained in step 3 has a lot of small branches that most likely are not part of a road. They therefore generate more noise than benefit to the scene, creating a more splintered final image. By pruning the skeleton we can enhance the representation of our roads by getting rid of some of this splintering. As you can see in our skeleton map in \figref{fig:skeleton_map} we mark all leave nodes and their connections yellow and all intersection nodes as well as their connections to other intersection nodes in green. Finally we consider all nodes with connection degree of one or lower, i.e. all nodes and connections in yellow, and remove those nodes together with the respective edge/branch.
 
 In the final and concluding step we do road detection and map reconstruction. For this we use a double thresholding method. Recall that we can describe a road as a branch of the skeleton with a large length compared to its width. 
 
@@ -141,20 +145,52 @@ The paper on which the method is based on \cite{GaZeScPo11} proposes to set the 
 
 Lastly we apply a marker based watershed transform on the distance map with the proposed skeleton to reconstruct a region map. The watershed transformation summarizes large common patches that we color with the help of our constructed mean-shift filtered image in every single region. Finally we obtain a segmented region map where each connected component contains exactly one connected skeleton segment. 
 
-\subsection{Singular Value Decomposition}
+\subsection{Singular Value Decomposition (SVD)}
 
-In a last and final step we extracted the first, second and third rank Singular Value Decomposition (SVD) image. As SVD in general extracts useful information, particularly the first two eigenvalues and eigenvectors in our case, we decided to use them and complete our feature extraction.
+In a last and final step we extracted the first, second and third rank of the Singular Value Decomposition (SVD). As SVD in general extracts useful information, in our case particularly the first two ranks, we decided to use them and therefore complete our feature extraction.
+
+\subsection{Models and Methods - Post-Processing}
+
+Based on an earlier lecture on \emph{Visual Computing} at \emph{ETH Zurich} by Prof. Markus Gross we knew that binary morphological closing could come of help, if we had problems with getting straight lines in the classification. Therefore we decided on doing a post-processing step after the image was classified.
+
+We could see significant improvements with respect to completion, but had difficulties in problematic areas, as the binary morphing amplified erratic regions as well.
 
 \section{Results}
+\label{sec:results}
 
 Our final result, an SVM model trained with 95 out of the 100 training images given (five contained nearly no roads and would have compromised the general case), achieves a correctness of up to 81.48\%, according to the lecture's online evaluation on \emph{kaggle}.
 
+\subsection{Comparison to Related Work}
+\label{sec:comparison}
 To know where we lie in comparison to related work, we looked at a few papers. One of them is a comparative study by Anastasiia Volkova and Peter W. Gibbens \cite{VoGi15}, where different road extraction techniques were analyzed --- one of them being an SVM classification model too, as in our approach. The proposed SVM classifier in \cite{VoGi15} gave high completeness results (75-91\%) --- a value we can relate to with our classifier --- but achieved very low correctness values (35\%) --- in comparison: our classifier achieves more than 81\%. This proves that our feature extraction is richer in information, i.e. there is more relevant detail in our data.
 
-A work done by Yuan and Cheriyada \cite{YuCh13} shows the potential of user
+There are other related works that are helped by human interaction, as e.g. a work done by Yuan and Cheriyada \cite{YuCh13}. There, we already have a vector map --- we can also say a one-pixel road map --- from which roads are then built upon. Our approach relies on no user interaction and is therefore fully automatized.
 
+\subsection{Future Work}
+\label{sec:future_work}
 
-\section*{Acknowledgements}
+As we can see in the final result, there is still potential for improvement, both in the feature extraction and in the post-processing. The score function explained in \secref{sec:continuity_score} for instance could be extended to work with a greater neighborhood to deal with streets that are covered by small trees, cars or shadows from buildings.
+
+In the post-processing step, a second skeletonization attempt could be done, to extinguish erratic classification as we can see in the sub-figure \subref{fig:post_processed} below.
+
+\begin{figure}[bp!]
+	\centering
+	\subfloat[original]
+	{\includegraphics[width=0.48\linewidth]{pics/test/img.png}}
+	\hspace{0.025\linewidth}
+	\subfloat[hand-made ground truth]
+	{\includegraphics[width=0.48\linewidth]{pics/test/grt.png}}
+	\hspace{0.025\linewidth}
+	\subfloat[classified image]
+	{\includegraphics[width=0.48\linewidth]{pics/test/final.png}}
+	\hspace{0.025\linewidth}
+	\subfloat[post-processed image\label{fig:post_processed}]
+	{\includegraphics[width=0.48\linewidth]{pics/test/post.png}}
+	\caption{Our final Result}
+	\label{fig:final_result}
+\end{figure}
+
+\section*{Acknowledgments}
 The authors thank the producers of Game of Thrones for being such an inspiration in the early mornings about how to kill people in hard times, when things do not go as expected.
 
 \bibliographystyle{IEEEtran}
